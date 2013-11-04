@@ -16,7 +16,7 @@ Here is some code for using this currently:
 ```javascript
 // Define the maptile object
 var coolMap = new maptile({
-  path: __dirname + '/../public/titles/some-map/',
+  path: __dirname + '/../public/tiles/some-map/',
   builder: function(opts, next) {
     var canvas = new Canvas(256, 256)
       , ctx = canvas.getContext('2d')
