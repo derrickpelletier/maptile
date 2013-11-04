@@ -1,0 +1,16 @@
+{
+  "name": "maptile",
+  "version": "0.0.1",
+  "description": "Node module for fetching, storing, and generating map tiles for use in Leaflet, Google maps, etc.",
+  "main": "index.js",
+  "repository": "",
+  "author": {
+    "name": "Derrick Pelletier",
+    "email": "derrick@dpelletier.com",
+    "url": "http://dpelletier.com"
+  },
+  "dependencies": {
+    "mkdirp": "~0.3.5",
+    "proj4": "~1.5.0-dev.5"
+  }
+}
