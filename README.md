@@ -14,7 +14,8 @@ A couple of the math transforms were repurposed from Leaflet's source: https://g
 Here is some code for using this currently:
 
 ```javascript
-var mapHigh = new maptile({
+// Define the maptile object
+var coolMap = new maptile({
   path: __dirname + '/../public/titles/some-map/',
   builder: function(opts, next) {
     var canvas = new Canvas(256, 256)
@@ -27,4 +28,18 @@ var mapHigh = new maptile({
     });
   }
 })
+
+// Get a map tile, in an express endpoint for example
+
+var tileEndpoint = function(req, res){
+  var coords = {
+      x: parseInt(req.params.x)
+    , y: parseInt(req.params.y)
+    , z: parseInt(req.params.z)
+  }
+
+  coolMap.getTile(coords, function(err, buffer){
+    res.send(buffer) // png buffer data
+  })  
+}
 ```
