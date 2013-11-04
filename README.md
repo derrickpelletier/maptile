@@ -2,6 +2,7 @@ Fetching, storing, and generating map tiles for use in Leaflet, Google maps, etc
 
 ## Forthcoming
 + Documentation and tests, like every good module
++ Some clean way to handle cache-life, rather than currently being permanent.
 + Overridable storage and fetch procedures, currently just storing and fetching from relative path. Would be nice to control where these went on a needs basis.
 + Add some kind of buffer method to expand the bounds. For example, a point near the edge of a tile might have a radius that extends beyond the edge of the tile but would not be drawn in the builder for the neighbor tile due to the origin being in the former tile. This would be useful for complex builder operations that aren't simply rendering polys or other queryable shapes onto a map.
 
