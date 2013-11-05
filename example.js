@@ -3,20 +3,23 @@
 var maptile = require('./index')
 
 var points = [
-    { "coordinates" : [  -118.0097634,  34.5762245 ], "type" : "Point" }
-  , { "coordinates" : [  -118.0184048,  34.57504 ], "type" : "Point" }
-  , { "coordinates" : [  -118.0157943,  34.5772466 ], "type" : "Point" }
-  , { "coordinates" : [  -118.0169737,  34.5749981 ], "type" : "Point" }
-  , { "coordinates" : [  -118.0163243,  34.5788158 ], "type" : "Point" }
-  , { "coordinates" : [  -118.0239772,  34.576114 ], "type" : "Point" }
-  , { "coordinates" : [  -118.0194372,  34.5740084 ], "type" : "Point" }
-  , { "coordinates" : [  -118.0199431,  34.5767789 ], "type" : "Point" }
-  , { "coordinates" : [  -118.0194502,  34.5754087 ], "type" : "Point" }
-  , { "coordinates" : [  -118.0284972,  34.5762863 ], "type" : "Point" }
+    { "coordinates" : [  -117.9033811,  33.7237372 ], "type" : "Point" }
+  , { "coordinates" : [  -117.9060747,  33.7218313 ], "type" : "Point" }
+  , { "coordinates" : [  -117.9034121,  33.722183 ], "type" : "Point" }
+  , { "coordinates" : [  -117.9055598,  33.7228303 ], "type" : "Point" }
+  , { "coordinates" : [  -117.9023885,  33.7221503 ], "type" : "Point" }
+  , { "coordinates" : [  -117.9017614,  33.720981 ], "type" : "Point" }
+  , { "coordinates" : [  -117.9051096,  33.7211311 ], "type" : "Point" }
+  , { "coordinates" : [  -117.9058423,  33.7241458 ], "type" : "Point" }
+  , { "coordinates" : [  -117.9079482,  33.7223639 ], "type" : "Point" }
+  , { "coordinates" : [  -117.9175553,  33.723971 ], "type" : "Point" }
+  , { "coordinates" : [  -117.9236789,  33.7218576 ], "type" : "Point" }
+  , { "coordinates" : [  -117.9227462,  33.7234876 ], "type" : "Point" }
 ]
 
-var coolMap = new maptile({
+var coolMap = new maptile.Map({
   path: __dirname + '/',
+  cache: false,
   builder: function(tile, next) {
     //...query here to get points or shapes or something
     tile.drawGeojson(points, {fillStyle: "rgba(165,46,25,0.8)"}, next)
@@ -27,10 +30,9 @@ var coolMap = new maptile({
 
 var coords = {
     x: 176
-  , y: 616
+  , y: 613
   , z: 10
 }
 coolMap.getTile(coords, function(err, buffer){
   console.log("this is your png, it also saved somewhere if you have caching", buffer)  
 })
-

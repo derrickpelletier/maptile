@@ -24,7 +24,7 @@ var earth_radius = 6378137
 // 
 // Map object, represents a collection of tiles for specific purpose.
 // 
-var Map = module.exports = function(options){
+var Map = module.exports.Map = function(options){
   var defaults = {
       type: "tms"
     , tile_size: 256
@@ -143,15 +143,35 @@ Tile.prototype.drawGeojson = function(points, settings, next) {
   }
   var tile_canvas = new canvas(this.map.tile_size, this.map.tile_size)
     , ctx = tile_canvas.getContext('2d')
-  ctx.fillStyle = settings.fillStyle
+  for(var i in settings) {
+    ctx[i] = settings[i]
+  }
   for(var i in points) {
     var p = points[i]
     ctx.beginPath()
-    if(p.type == "Point") {
-      var offset = this.getOffset(p.coordinates)
-      ctx.arc(offset[0], offset[1], 1, 0, Math.PI * 2, true)
+    switch(p.type){
+      case "Point":
+        var offset = this.getOffset(p.coordinates)
+        ctx.arc(offset[0], offset[1], 1, 0, Math.PI * 2, true)
+        ctx.closePath()
+        break 
+      case "Polygon":
+        for(var a = 0; a < p.coordinates.length; a++) {
+          if(a === 0) { // First ring, clockwise.
+            for(var b = 0; b < p.coordinates[a].length; b++){
+              var offset = this.getOffset(p.coordinates[a][b])
+              b === 0 ? ctx.moveTo(offset[0], offset[1]) : ctx.lineTo(offset[0], offset[1])
+            }
+          } else { // Holes counter-clockwise
+            for (var b = p.coordinates[a].length - 1; b >= 0; b--) {
+              var offset = this.getOffset(p.coordinates[a][b])
+              b === 0 ? ctx.moveTo(offset[0], offset[1]) : ctx.lineTo(offset[0], offset[1])
+            }
+          }
+          ctx.closePath();
+        }
+        break
     }
-    ctx.closePath()
     ctx.fill()
   }
   next(tile_canvas.toBuffer())
