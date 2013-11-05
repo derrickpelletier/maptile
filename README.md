@@ -26,14 +26,9 @@ Here is some code for using this currently, make sure to check out the example.j
 // Define the maptile object
 var coolMap = new maptile({
   path: __dirname + '/../public/tiles/some-map/',
-  builder: function(opts, next) {
-    var canvas = new Canvas(256, 256)
-      , ctx = canvas.getContext('2d')
-      , geojson = this.getGeoJSONBounds(opts)
-
-    someKindaQuery.findWithinPoly(geojson, function(err, shapes){
-      // ... draw the shapes to the canvas ctx
-      next(canvas.toBuffer())
+  builder: function(tile, next) {
+    someKindaQuery.findWithinPoly(geojson, function(err, points){
+      tile.drawGeojson(points, {fillStyle: "rgba(165,46,25,0.8)"}, next)
     });
   }
 })
