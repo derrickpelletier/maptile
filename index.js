@@ -9,6 +9,7 @@ var fs = require('fs')
   , util = require('util')
   , mkdirp = require('mkdirp')
   , proj4 = require('proj4')
+  , canvas = require('canvas')
 
 // 
 // google projection for conversions
@@ -47,7 +48,7 @@ Map.prototype.getTile = function(opts, next) {
   if(this.cache && fs.existsSync(file_path)) {
     fs.readFile(file_path, next)
   } else if(this.builder) {
-    this.builder.call(self, opts, function(buffer){
+    this.builder.call(self, new Tile(opts, this), function(buffer){
       next(null, buffer)
       if(!self.cache) return
       mkdirp.sync(util.format(self.path + "%d/%d/", opts.z, opts.x))
@@ -59,55 +60,105 @@ Map.prototype.getTile = function(opts, next) {
 // 
 // Conversion methods, self explanitory
 // 
-Map.prototype.lonLatToPixels = function (lon, lat, zoom) {
+var lonLatToPixels = function (lon, lat, zoom, tile_size) {
   // spherical mercator...
   var d = Math.PI / 180
     , max = 85.0511287798 //max latitutude
     , lat = Math.max(Math.min(max, lat), -max)
     , x = lon * d
     , y = Math.log(Math.tan((Math.PI / 4) + (lat * d / 2)));
-  return this.transform(x, y, zoom)
+  return transform(x, y, zoom, tile_size)
 }
 
-Map.prototype.metersToPixels = function(x, y, zoom) {
-  return this.transform(x / earth_radius, y / earth_radius, zoom)
+var metersToPixels = function(x, y, zoom, tile_size) {
+  return transform(x / earth_radius, y / earth_radius, zoom, tile_size)
 }
 
-Map.prototype.metersToLonLat = function(x, y) {
+var metersToLonLat = function(x, y) {
   return proj4(proj4.defs['EPSG:3857'], proj4.WGS84, [x,y])
 }
 
-Map.prototype.pixelsToLonLat = function(px, py, zoom){
-  var coords = this.untransform(px, py, zoom)
+var pixelsToLonLat = function(px, py, zoom, tile_size){
+  var coords = untransform(px, py, zoom, tile_size)
   var lon = coords[0] * 180 / Math.PI
     , lat = (2 * Math.atan(Math.exp(coords[1])) - (Math.PI / 2)) * 180 / Math.PI;
   return [lon, lat]
 }
 
-Map.prototype.transform = function(x, y, zoom) {
-  var scale = this.tile_size * Math.pow(2, zoom)
+var transform = function(x, y, zoom, tile_size) {
+  var scale = tile_size * Math.pow(2, zoom)
   x = scale * (transform_vars[0] * x + transform_vars[1])
   y = scale * (transform_vars[2] * y + transform_vars[3])
   return [x, y]
 }
 
-Map.prototype.untransform = function(x, y, zoom) {
-  var scale = this.tile_size * Math.pow(2, zoom)
+var untransform = function(x, y, zoom, tile_size) {
+  var scale = tile_size * Math.pow(2, zoom)
   x = (x / scale - transform_vars[1]) / transform_vars[0]
   y = (y / scale - transform_vars[3]) / transform_vars[2]
   return [x, y]
 }
 
 // Returns bounds of the given tile in lon/lat coordinates
-Map.prototype.tileBounds = function(tx, ty, zoom) {
+var tileBounds = function(tx, ty, zoom, tile_size) {
   return {
-      min: this.pixelsToLonLat(tx * this.tile_size, ty * this.tile_size, zoom)
-    , max: this.pixelsToLonLat((tx + 1) * this.tile_size, (ty + 1) * this.tile_size, zoom)
+      min: pixelsToLonLat(tx * tile_size, ty * tile_size, zoom, tile_size)
+    , max: pixelsToLonLat((tx + 1) * tile_size, (ty + 1) * tile_size, zoom, tile_size)
   }
 }
 
-Map.prototype.getGeoJSONBounds = function(opts) {
-  var bounds = this.tileBounds(opts.x, opts.y, opts.z, this.tile_size)
+// 
+// Map object, represents a collection of tiles for specific purpose.
+// 
+var Tile = function(coords, map){
+  var defaults = {
+      x: 0
+    , y: 0
+    , z: 0
+  }
+  this.map = map
+  coords = coords || {}
+  for (var attrname in defaults) {
+    this[attrname] = coords.hasOwnProperty(attrname) && coords[attrname] !== null ? coords[attrname] : defaults[attrname]
+  }
+}
+
+// 
+// Get the pixel-offset of the coordinates relative to the top-left of the tiles pixel position.
+// Used to draw points in a tile.
+// 
+Tile.prototype.getOffset = function(coordinates) {
+  var pixel_coords = lonLatToPixels(coordinates[0], coordinates[1], this.z, this.map.tile_size)
+  var tile_pixels = this.getPixelBounds()
+  return [Math.round(pixel_coords[0] - tile_pixels.min[0]), Math.round(tile_pixels.max[1] - pixel_coords[1])]
+}
+
+
+// 
+// DRWWING THINGS!
+// 
+Tile.prototype.drawGeojson = function(points, settings, next) {
+  if(typeof settings === 'function') {
+    next = settings
+  }
+  var tile_canvas = new canvas(this.map.tile_size, this.map.tile_size)
+    , ctx = tile_canvas.getContext('2d')
+  ctx.fillStyle = settings.fillStyle
+  for(var i in points) {
+    var p = points[i]
+    ctx.beginPath()
+    if(p.type == "Point") {
+      var offset = this.getOffset(p.coordinates)
+      ctx.arc(offset[0], offset[1], 1, 0, Math.PI * 2, true)
+    }
+    ctx.closePath()
+    ctx.fill()
+  }
+  next(tile_canvas.toBuffer())
+}
+
+Tile.prototype.getGeoJSONBounds = function() {
+  var bounds = tileBounds(this.x, this.y, this.z, this.map.tile_size)
   return [[
       [bounds.min[0], bounds.min[1]]
     , [bounds.min[0], bounds.max[1]]
@@ -117,20 +168,9 @@ Map.prototype.getGeoJSONBounds = function(opts) {
   ]]
 }
 
-Map.prototype.getLonLatBounds = Map.prototype.tileBounds;
-
-Map.prototype.getPixelBounds = function(opts) {
+Tile.prototype.getPixelBounds = function() {
   return {
-      min: [opts.x * this.tile_size, opts.y * this.tile_size]
-    , max: [(opts.x + 1) * this.tile_size, (opts.y + 1) * this.tile_size]
+      min: [this.x * this.map.tile_size, this.y * this.map.tile_size]
+    , max: [(this.x + 1) * this.map.tile_size, (this.y + 1) * this.map.tile_size]
   }
-}
-
-// 
-// Get the pixel-offset of the coordinates relative to the top-left of the tiles pixel position.
-// Used to draw points in a tile.
-// 
-Map.prototype.getOffset = function(tile_pixels, coordinates, zoom) {
-  var pixel_coords = this.lonLatToPixels(coordinates[0], coordinates[1], zoom)
-  return [Math.round(pixel_coords[0] - tile_pixels[0]), Math.round(tile_pixels[1] - pixel_coords[1])]
 }
