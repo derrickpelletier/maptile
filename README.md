@@ -14,7 +14,7 @@ A couple of the math transforms were repurposed from Leaflet's source: https://g
 
 ------
 
-Here is some code for using this currently:
+Here is some code for using this currently, make sure to check out the example.js file.
 
 ```javascript
 // Define the maptile object
