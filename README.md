@@ -1,5 +1,7 @@
 Fetching, storing, and generating map tiles for use in Leaflet, Google maps, etc.
 
+`npm install maptile`
+
 ## Forthcoming
 + Documentation and tests, like every good module
 + Some clean way to handle cache-life, rather than currently being permanent.
