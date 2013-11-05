@@ -14,6 +14,12 @@ A couple of the math transforms were repurposed from Leaflet's source: https://g
 
 ------
 
+## Requirements
+
+You'll need to install Cairo for canvas support. Check out the instructions here, it's fairly simple: http://github.com/learnboost/node-canvas.
+
+------
+
 Here is some code for using this currently, make sure to check out the example.js file.
 
 ```javascript
