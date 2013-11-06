@@ -1,6 +1,7 @@
 // hello, world.
 
 var maptile = require('./index')
+  // , fs = require('fs')
 
 var points = [
     { "coordinates" : [  -117.9033811,  33.7237372 ], "type" : "Point" }
@@ -18,8 +19,7 @@ var points = [
 ]
 
 var coolMap = new maptile.Map({
-  path: __dirname + '/',
-  cache: false,
+  path: __dirname + '/{z}-{x}-{y}.png',
   builder: function(tile, next) {
     //...query here to get points or shapes or something
     tile.drawGeojson(points, {fillStyle: "rgba(165,46,25,0.8)"}, next)
@@ -33,6 +33,8 @@ var coords = {
   , y: 613
   , z: 10
 }
+
 coolMap.getTile(coords, function(err, buffer){
+  // fs.writeFile('test.png', buffer, function(){})
   console.log("this is your png, it also saved somewhere if you have caching", buffer)  
 })

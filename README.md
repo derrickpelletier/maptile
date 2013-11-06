@@ -25,7 +25,7 @@ Here is some code for using this currently, make sure to check out the example.j
 ```javascript
 // Define the maptile object
 var coolMap = new maptile.Map({
-  path: __dirname + '/../public/tiles/some-map/',
+  path: __dirname + '/../public/tiles/some-map/{z}/{x}/{y}.png',
   builder: function(tile, next) {
     someKindaQuery.findWithinPoly(geojson, function(err, points){
       tile.drawGeojson(points, {fillStyle: "rgba(165,46,25,0.8)"}, next)

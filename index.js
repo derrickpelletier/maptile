@@ -10,6 +10,7 @@ var fs = require('fs')
   , mkdirp = require('mkdirp')
   , proj4 = require('proj4')
   , canvas = require('canvas')
+  , path = require('path')
 
 // 
 // google projection for conversions
@@ -28,7 +29,7 @@ var Map = module.exports.Map = function(options){
   var defaults = {
       type: "tms"
     , tile_size: 256
-    , path: './tiles/'
+    , path: './tiles/{z}/{x}/{y}.png'
     , cache: true
     , builder: null
   }
@@ -44,14 +45,14 @@ var Map = module.exports.Map = function(options){
 // 
 Map.prototype.getTile = function(opts, next) {
   var self = this
-  var file_path = this.path + util.format("%d/%d/%d.png", opts.z, opts.x, opts.y)
+  var file_path = this.path.replace("{x}", opts.x).replace("{y}",opts.y).replace("{z}", opts.z)
   if(this.cache && fs.existsSync(file_path)) {
     fs.readFile(file_path, next)
   } else if(this.builder) {
     this.builder.call(self, new Tile(opts, this), function(buffer){
       next(null, buffer)
       if(!self.cache) return
-      mkdirp.sync(util.format(self.path + "%d/%d/", opts.z, opts.x))
+      mkdirp.sync(path.dirname(file_path))
       fs.writeFile(file_path, buffer, function(){ /* wrote the file, emit an event? */ })
     })
   }
