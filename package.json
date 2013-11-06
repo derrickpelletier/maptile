@@ -1,6 +1,6 @@
 {
   "name": "maptile",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Node module for fetching, storing, and generating map tiles for use in Leaflet, Google maps, etc.",
   "main": "index.js",
   "repository": {
