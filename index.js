@@ -130,7 +130,7 @@ var Tile = function(coords, map){
 Tile.prototype.getOffset = function(coordinates) {
   var pixel_coords = lonLatToPixels(coordinates[0], coordinates[1], this.z, this.map.tile_size)
   var tile_pixels = this.getPixelBounds()
-  return [Math.round(pixel_coords[0] - tile_pixels.min[0]), Math.round(tile_pixels.max[1] - pixel_coords[1])]
+  return [pixel_coords[0] - tile_pixels.min[0], tile_pixels.max[1] - pixel_coords[1]]
 }
 
 
