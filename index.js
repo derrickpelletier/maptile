@@ -11,6 +11,7 @@ var fs = require('fs')
   , proj4 = require('proj4')
   , canvas = require('canvas')
   , path = require('path')
+  , cp = require('child_process')
 
 // 
 // google projection for conversions
@@ -32,6 +33,7 @@ var Map = module.exports.Map = function(options){
     , path: './tiles/{z}/{x}/{y}.png'
     , cache: true
     , builder: null
+    , simplify: null
   }
   options = options || {}
   for (var attrname in defaults) {
@@ -144,38 +146,52 @@ Tile.prototype.drawGeojson = function(points, settings, next) {
   }
   var tile_canvas = new canvas(this.map.tile_size, this.map.tile_size)
     , ctx = tile_canvas.getContext('2d')
-  for(var i in settings) {
-    ctx[i] = settings[i]
-  }
-  for(var i in points) {
-    var p = points[i]
-    ctx.beginPath()
-    switch(p.type){
+    , drawn = 0
+    , self = this
+
+  for(var i in settings) { ctx[i] = settings[i] }
+
+  var drawFeature = function(feature, next) {
+    switch(feature.type){
       case "Point":
-        var offset = this.getOffset(p.coordinates)
+        var offset = self.getOffset(feature.coordinates)
+        ctx.beginPath()
         ctx.arc(offset[0], offset[1], 1, 0, Math.PI * 2, true)
         ctx.closePath()
+        ctx.fill()
+        next()
         break 
       case "Polygon":
-        for(var a = 0; a < p.coordinates.length; a++) {
-          if(a === 0) { // First ring, clockwise.
-            for(var b = 0; b < p.coordinates[a].length; b++){
-              var offset = this.getOffset(p.coordinates[a][b])
-              b === 0 ? ctx.moveTo(offset[0], offset[1]) : ctx.lineTo(offset[0], offset[1])
+        self.simplifyPoly(p, function(processedFeature){
+          ctx.beginPath()
+          for(var a = 0; a < processedFeature.coordinates.length; a++) {
+            if(a === 0) { // First ring, clockwise.
+              for(var b = 0; b < processedFeature.coordinates[a].length; b++){
+                var offset = self.getOffset(processedFeature.coordinates[a][b])
+                b === 0 ? ctx.moveTo(offset[0], offset[1]) : ctx.lineTo(offset[0], offset[1])
+              }
+            } else { // Holes counter-clockwise
+              for (var b = processedFeature.coordinates[a].length - 1; b >= 0; b--) {
+                var offset = self.getOffset(processedFeature.coordinates[a][b])
+                b === 0 ? ctx.moveTo(offset[0], offset[1]) : ctx.lineTo(offset[0], offset[1])
+              }
             }
-          } else { // Holes counter-clockwise
-            for (var b = p.coordinates[a].length - 1; b >= 0; b--) {
-              var offset = this.getOffset(p.coordinates[a][b])
-              b === 0 ? ctx.moveTo(offset[0], offset[1]) : ctx.lineTo(offset[0], offset[1])
-            }
+            ctx.closePath();
           }
-          ctx.closePath();
-        }
+          ctx.fill()
+          next()
+        })
         break
     }
-    ctx.fill()
   }
-  next(tile_canvas.toBuffer())
+
+  for(var i in points) {
+    drawFeature(points[i], function(){
+      if(++drawn === points.length) {
+       return next(tile_canvas.toBuffer())
+      }
+    })
+  }
 }
 
 Tile.prototype.getGeoJSONBounds = function() {
@@ -194,4 +210,14 @@ Tile.prototype.getPixelBounds = function() {
       min: [this.x * this.map.tile_size, this.y * this.map.tile_size]
     , max: [(this.x + 1) * this.map.tile_size, (this.y + 1) * this.map.tile_size]
   }
+}
+
+Tile.prototype.simplifyPoly = function(geojson_polyon, next) {
+  var tolerance = this.map.simplify ? this.map.simplify(this.z) : null
+  if(!tolerance) {
+    return next(geojson_polyon)
+  }
+  cp.exec("ogr2ogr -f 'GeoJSON' /vsistdout/ -simplify " + tolerance + " '" + JSON.stringify(geojson_polyon)+"'", function(error, stdout, stderr){
+    return next(JSON.parse(stdout).features[0].geometry)
+  })
 }
