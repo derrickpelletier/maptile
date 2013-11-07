@@ -162,7 +162,7 @@ Tile.prototype.drawGeojson = function(points, settings, next) {
         next()
         break 
       case "Polygon":
-        self.simplifyPoly(p, function(processedFeature){
+        self.simplifyPoly(feature, function(processedFeature){
           ctx.beginPath()
           for(var a = 0; a < processedFeature.coordinates.length; a++) {
             if(a === 0) { // First ring, clockwise.
