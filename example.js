@@ -22,7 +22,7 @@ var points = [
 
 var coolMap = new maptile.Map({
   path: __dirname + '/{z}-{x}-{y}.png',
-  cache: false,
+  cachelife: 30000,
   simplify: function(zoom){
     console.log(zoom)
     if(zoom > 7) return false

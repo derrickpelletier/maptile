@@ -34,6 +34,7 @@ var Map = module.exports.Map = function(options){
     , cache: true
     , builder: null
     , simplify: null
+    , cachelife: 0
   }
   options = options || {}
   for (var attrname in defaults) {
@@ -48,15 +49,26 @@ var Map = module.exports.Map = function(options){
 Map.prototype.getTile = function(opts, next) {
   var self = this
   var file_path = this.path.replace("{x}", opts.x).replace("{y}",opts.y).replace("{z}", opts.z)
-  if(this.cache && fs.existsSync(file_path)) {
-    fs.readFile(file_path, next)
-  } else if(this.builder) {
-    this.builder.call(self, new Tile(opts, this), function(buffer){
+
+  var generateTile = function(){
+    self.builder.call(self, new Tile(opts, self), function(buffer){
       next(null, buffer)
       if(!self.cache) return
       mkdirp.sync(path.dirname(file_path))
       fs.writeFile(file_path, buffer, function(){ /* wrote the file, emit an event? */ })
     })
+  }
+
+  if(this.cache){
+    fs.stat(file_path, function(err, stats){
+      if(stats && (self.cachelife === 0 || Date.now() - (new Date(stats.mtime).getTime()) <= self.cachelife)) {
+        return fs.readFile(file_path, next)
+      } else {
+        return generateTile()
+      }
+    })
+  } else if(this.builder) {
+    return generateTile()
   }
 }
 
@@ -148,7 +160,8 @@ Tile.prototype.drawGeojson = function(points, settings, next) {
     , ctx = tile_canvas.getContext('2d')
     , drawn = 0
     , self = this
-
+  
+  
   for(var i in settings) { ctx[i] = settings[i] }
 
   var drawFeature = function(feature, next) {
@@ -192,6 +205,7 @@ Tile.prototype.drawGeojson = function(points, settings, next) {
       }
     })
   }
+  ctx.fillText(new Date(), 100, 100);
 }
 
 Tile.prototype.getGeoJSONBounds = function() {
