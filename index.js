@@ -163,6 +163,10 @@ Tile.prototype.drawGeojson = function(points, settings, next) {
   
   
   for(var i in settings) { ctx[i] = settings[i] }
+  
+  if(!points || points.length === 0) {
+    return next(tile_canvas.toBuffer())
+  }
 
   var drawFeature = function(feature, next) {
     switch(feature.type){
@@ -205,7 +209,6 @@ Tile.prototype.drawGeojson = function(points, settings, next) {
       }
     })
   }
-  ctx.fillText(new Date(), 100, 100);
 }
 
 Tile.prototype.getGeoJSONBounds = function() {
