@@ -169,6 +169,9 @@ Tile.prototype.drawGeojson = function(points, settings, next) {
   }
 
   var drawFeature = function(feature, next) {
+    if(feature.hasOwnProperty('ctx')) {
+      for(var i in feature.ctx) { ctx[i] = feature.ctx[i] }
+    }
     switch(feature.type){
       case "Point":
         var offset = self.getOffset(feature.coordinates)
