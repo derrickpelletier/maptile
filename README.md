@@ -8,11 +8,11 @@ Fetching, storing, and generating map tiles for use in Leaflet, Google maps, etc
 + Helper projections (lat/lon, meters, pixels)
 + Fit into custom/existing server structure; not forced to install standalone tile-server.
 + Optional caching; live data when caching is off (or low).
++ bounds offset to aid in drawing overlapping shapes from neighbor tiles that might not be caught by geospatial queries.
 
 ## Forthcoming
 + Documentation and tests, like every good module
 + Overridable storage and fetch procedures, currently just storing and fetching from relative path. Would be nice to control where these went on a needs basis.
-+ Add some kind of buffer method to expand the bounds. For example, a point near the edge of a tile might have a radius that extends beyond the edge of the tile but would not be drawn in the builder for the neighbor tile due to the origin being in the former tile. This would be useful for complex builder operations that aren't simply rendering polys or other queryable shapes onto a map.
 
 ------
 
@@ -33,7 +33,7 @@ Here is some code for using this currently, make sure to check out the example.j
 var coolMap = new maptile.Map({
   path: __dirname + '/../public/tiles/some-map/{z}/{x}/{y}.png',
   builder: function(tile, next) {
-    someKindaQuery.findWithinPoly(geojson, function(err, points){
+    someKindaQuery.findWithinPoly(tile.getGeoJSONBounds(offset), function(err, points){
       tile.drawGeojson(points, {fillStyle: "rgba(165,46,25,0.8)"}, next)
     });
   }

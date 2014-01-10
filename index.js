@@ -211,15 +211,26 @@ Tile.prototype.drawGeojson = function(points, settings, next) {
   }
 }
 
-Tile.prototype.getGeoJSONBounds = function() {
+Tile.prototype.getGeoJSONBounds = function(offset) {
+  offset = !offset ? 0 : offset
   var bounds = tileBounds(this.x, this.y, this.z, this.map.tile_size)
-  return [[
+  var geojsonBounds = [[
       [bounds.min[0], bounds.min[1]]
     , [bounds.min[0], bounds.max[1]]
     , [bounds.max[0], bounds.max[1]]
     , [bounds.max[0], bounds.min[1]]
     , [bounds.min[0], bounds.min[1]]
   ]]
+  if(offset !== 0) {
+    geojsonBounds = [[
+        offsetter(geojsonBounds[0][0], offset, -offset)
+      , offsetter(geojsonBounds[0][1], offset, offset)
+      , offsetter(geojsonBounds[0][2], -offset, offset)
+      , offsetter(geojsonBounds[0][3], -offset, -offset)
+      , offsetter(geojsonBounds[0][4], offset, -offset)
+    ]]
+  }
+  return geojsonBounds
 }
 
 Tile.prototype.getPixelBounds = function() {
@@ -237,4 +248,13 @@ Tile.prototype.simplifyPoly = function(geojson_polyon, next) {
   cp.exec("ogr2ogr -f 'GeoJSON' /vsistdout/ -simplify " + tolerance + " '" + JSON.stringify(geojson_polyon)+"'", function(error, stdout, stderr){
     return next(JSON.parse(stdout).features[0].geometry)
   })
+}
+
+//
+// Takes a [lon, lat] and offsets it by the give amounts in meters.
+//
+var offsetter = function (point, x, y) {
+  var lat = point[1] + (180 / Math.PI) * (y / earth_radius)
+  var lon = point[0] + (180 / Math.PI) * (x / earth_radius) / Math.cos(point[1])
+  return [lon, lat]
 }
