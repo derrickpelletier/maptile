@@ -218,19 +218,19 @@ Tile.prototype.getGeoJSONBounds = function(offset) {
   offset = !offset ? 0 : offset
   var bounds = tileBounds(this.x, this.y, this.z, this.map.tile_size)
   var geojsonBounds = [[
-      [bounds.min[0], bounds.min[1]]
-    , [bounds.min[0], bounds.max[1]]
-    , [bounds.max[0], bounds.max[1]]
-    , [bounds.max[0], bounds.min[1]]
-    , [bounds.min[0], bounds.min[1]]
+      [bounds.min[0], bounds.min[1]] // wn
+    , [bounds.min[0], bounds.max[1]] // en
+    , [bounds.max[0], bounds.max[1]] // es
+    , [bounds.max[0], bounds.min[1]] // ws
+    , [bounds.min[0], bounds.min[1]] // wn
   ]]
   if(offset !== 0) {
     geojsonBounds = [[
-        offsetter(geojsonBounds[0][0], offset, -offset)
+        offsetter(geojsonBounds[0][0], -offset, offset)
       , offsetter(geojsonBounds[0][1], offset, offset)
-      , offsetter(geojsonBounds[0][2], -offset, offset)
+      , offsetter(geojsonBounds[0][2], offset, -offset)
       , offsetter(geojsonBounds[0][3], -offset, -offset)
-      , offsetter(geojsonBounds[0][4], offset, -offset)
+      , offsetter(geojsonBounds[0][4], -offset, offset)
     ]]
   }
   return geojsonBounds
@@ -258,6 +258,6 @@ Tile.prototype.simplifyPoly = function(geojson_polyon, next) {
 //
 var offsetter = function (point, x, y) {
   var lat = point[1] + (180 / Math.PI) * (y / earth_radius)
-  var lon = point[0] + (180 / Math.PI) * (x / earth_radius) / Math.cos(point[1])
+  var lon = point[0] + (180 / Math.PI) * (x / earth_radius) / Math.cos(Math.PI / 180.0 * point[1])
   return [lon, lat]
 }
