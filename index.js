@@ -35,6 +35,8 @@ var Map = module.exports.Map = function(options){
     , builder: null
     , simplify: null
     , cachelife: 0
+    , provided: false
+    , transparent: null
   }
   options = options || {}
   for (var attrname in defaults) {
@@ -59,10 +61,12 @@ Map.prototype.getTile = function(opts, next) {
     })
   }
 
-  if(this.cache){
+  if(this.cache || this.provided){
     fs.stat(file_path, function(err, stats){
       if(stats && (self.cachelife === 0 || Date.now() - (new Date(stats.mtime).getTime()) <= self.cachelife)) {
         return fs.readFile(file_path, next)
+      } else if(self.provided && self.transparent) {
+        return next(null, self.transparent)
       } else {
         return generateTile()
       }
