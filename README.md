@@ -1,3 +1,8 @@
+### NOTE:
+This works as a quick-and-easy tile generator, but it was originally only built for some quick prototyping. I recommend looking the following if you need a nice robust solution: [mapnik/node-mapnik](https://github.com/mapnik/node-mapnik) and/or [mapbox/tilelive](https://github.com/mapbox/tilelive.js). You'll find what you need there.
+
+--------------
+
 Fetching, storing, and generating map tiles for use in Leaflet, Google maps, etc.
 
 `npm install maptile`
